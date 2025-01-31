@@ -53,12 +53,12 @@ def show_dist(var):
 
 def test_de_bondad():
     # Ajustar la distribución Weibull
-    params_weibull = stats.weibull_max.fit(data)
+    params_weibull = stats.weibull_max.fit(data['volatility'])
 
     # Ajustar la distribución Gumbel
-    params_gumbel = stats.gumbel_r.fit(data)
+    params_gumbel = stats.gumbel_r.fit(data['volatility'])
     # Prueba de Kolmogorov-Smirnov para Weibull
-    ks_statistic_weibull, ks_p_value_weibull = stats.kstest(data, 'weibull_max', args=params_weibull)
+    ks_statistic_weibull, ks_p_value_weibull = stats.kstest(data['volatility'], 'weibull_max', args=params_weibull)
     print(f"Prueba K-S para Weibull: estadístico = {ks_statistic_weibull}, valor p = {ks_p_value_weibull}")
 
     # Conclusiones para Weibull
@@ -68,22 +68,22 @@ def test_de_bondad():
         print("Los datos podrian seguir la distribución Weibull (K-S test).")
 
     # Prueba de Kolmogorov-Smirnov para Gumbel
-    ks_statistic_gumbel, ks_p_value_gumbel = stats.kstest(data, 'gumbel_r', args=params_gumbel)
+    ks_statistic_gumbel, ks_p_value_gumbel = stats.kstest(data['volatility'], 'gumbel_r', args=params_gumbel)
     print(f"Prueba K-S para Gumbel: estadístico = {ks_statistic_gumbel}, valor p = {ks_p_value_gumbel}")
 
     # Conclusiones para Gumbel
     if ks_p_value_gumbel < 0.05:
         print("Los datos no siguen la distribución Gumbel (K-S test).")
     else:
-        print("Los datos podrian la distribución Gumbel (K-S test).")
+        print("Los datos podrian seguir la distribución Gumbel (K-S test).")
 
 
 def test_student(var):
     # Ajustar la distribución t-Student
-    params_t = stats.t.fit(data['volatility'])
+    params_t = stats.t.fit(data[var])
 
     # Prueba de Kolmogorov-Smirnov para t-Student
-    ks_statistic_t, ks_p_value_t = stats.kstest(data['volatility'], 't', args=params_t)
+    ks_statistic_t, ks_p_value_t = stats.kstest(data[var], 't', args=params_t)
     print(f"Prueba K-S para t-Student: estadístico = {ks_statistic_t}, valor p = {ks_p_value_t}")
 
     # Conclusiones para t-Student

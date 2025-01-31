@@ -110,10 +110,10 @@ def describe(days, symbol):
     print(f"Media: {mean_volume_crypto}, Mediana: {median_volume_crypto}, Moda: {mode_volume_crypto}\n")   
 
     # Gráficos de barras para media, mediana y moda
-    labels = ['Cierre', 'Máximo', 'Mínimo', 'Vol. USD', 'Vol. Cripto']
-    mean_values = [mean_close, mean_high, mean_low, mean_volume_usd, mean_volume_crypto]
-    median_values = [median_close, median_high, median_low, median_volume_usd, median_volume_crypto]
-    mode_values = [mode_close, mode_high, mode_low, mode_volume_usd, mode_volume_crypto]
+    labels = ['Cierre', 'Máximo', 'Mínimo', 'Vol. Cripto']
+    mean_values = [mean_close, mean_high, mean_low, mean_volume_crypto]
+    median_values = [median_close, median_high, median_low, median_volume_crypto]
+    mode_values = [mode_close, mode_high, mode_low, mode_volume_crypto]
     # Crear el gráfico
     plt.figure(figsize=(14, 6))
 

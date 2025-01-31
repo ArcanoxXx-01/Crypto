@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from factor_analyzer.factor_analyzer import calculate_kmo , calculate_bartlett_sphericity
 from factor_analyzer import FactorAnalyzer
 import matplotlib.pyplot as plt
 from read_data import read_data
@@ -17,7 +18,6 @@ def AFE():
     data_scaled = scaler.fit_transform(data)
 
     # Prueba de adecuación de KMO
-    from factor_analyzer.factor_analyzer import calculate_kmo
     kmo_all, kmo_model = calculate_kmo(data_scaled)
     print(f"KMO de adecuación: {kmo_model:.2f}")
     if kmo_model < 0.6:
@@ -26,7 +26,6 @@ def AFE():
         print("Los datos son adecuados para AFE.")
 
     # Prueba de esfericidad de Bartlett
-    from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity
     chi2, p = calculate_bartlett_sphericity(data_scaled)
     print(f"Prueba de Bartlett: chi2={chi2:.2f}, p={p:.2e}")
     if p < 0.05:
@@ -60,5 +59,3 @@ def AFE():
     variance = fa.get_factor_variance()
     print(f"Varianza explicada: {variance[0]}")
 
-
-AFE()
