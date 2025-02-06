@@ -10,7 +10,7 @@ import seaborn as sns
 
 def pca(days):
     # Seleccionar las características
-    features = ['open', 'high', 'low', 'close', 'volume cripto', 'average', 'volatility']
+    features = ['open', 'high', 'low', 'close', 'volume cripto', 'average', 'volatility', 'returns']
 
     df = read_data(days, features+['symbol'])
     df['symbol'] = df['symbol'].str.strip()
@@ -28,7 +28,7 @@ def pca(days):
 
     # Varianza explicada
     explained_variance = pca.explained_variance_ratio_
-    # print(f"Varianza explicada por los componentes: {explained_variance}")
+    print(f"Varianza explicada por los componentes: {explained_variance}")
 
     # Cargas de las variables
     loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
@@ -60,7 +60,7 @@ def pca(days):
 
 def analisis_pca_criptos(days):
     # Seleccionar las características
-    features = ['open', 'high', 'low', 'close', 'volume cripto', 'average', 'volatility']
+    features = ['open', 'high', 'low', 'close', 'volume cripto', 'average', 'volatility','returns']
 
     df = read_data(days, features+['symbol'])
     df['symbol'] = df['symbol'].str.strip()  

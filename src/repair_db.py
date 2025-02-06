@@ -42,6 +42,9 @@ def repair( delete_first_row = 0 ):
                 if {'volume usd', 'volume cripto'}.issubset(df.columns) and not {'average'}.issubset(df.columns):
                     df.insert(6,"average",df['volume usd'] / df['volume cripto'])
 
+                if{'open', 'close'}.issubset(df.columns) and not {'returns'}.issubset(df.columns):
+                    df.insert(7, "returns", (df['close']-df['open'])/ df['open'])   
+
                 # Guardar el archivo actualizado
                 df.to_csv(ruta_archivo, index=False)
                 print(f"Procesado: {archivo}")

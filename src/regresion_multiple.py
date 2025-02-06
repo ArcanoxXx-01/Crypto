@@ -2,14 +2,17 @@ import pandas as pd
 import statsmodels.api as sm
 from read_data import read_data
 
-def multiple_regression(days: int, independient_vars, dependient_var):
+def multiple_regression(days: int, independient_vars, dependient_var, type: None):
     # Cargar los datos
     vars= independient_vars
     vars.append(dependient_var)
-    df = read_data(days, vars )
+    df = read_data(days, vars+['symbol'] )
 
     # Eliminar filas con valores nulos
     df = df.dropna(subset=vars)
+
+    if type: 
+        df= df[df['symbol']==type]
 
     # Asegurar que las columnas son del tipo correcto
     numeric_columns = vars

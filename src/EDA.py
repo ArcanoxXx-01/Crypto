@@ -35,11 +35,11 @@ def histograma(var: str, days):
 
 def correlation(days):
     # Mapa de calor para ver la correlación entre variables
-    data= read_data(days, ['open', 'high', 'low', 'close', 'volume usd', 'volume cripto', 'volatility', 'average'])
-    correlation_matrix = data[['open', 'high', 'low', 'close', 'volume usd', 'volume cripto', 'volatility', 'average']].corr()
+    data= read_data(days, ['open', 'high', 'low', 'close', 'volume usd', 'volume cripto', 'volatility', 'average','returns'])
+    correlation_matrix = data[['open', 'high', 'low', 'close', 'volume usd', 'volume cripto', 'volatility', 'average','returns']].corr()
     plt.figure(figsize=(10, 8))
     sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True)
-    plt.title('Mapa de Calor de Correlaciones')
+    plt.title('Mapa de Calor de Correlaciones de Pearson')
     plt.show()
 
 def attipic_values(days, var1 , var2):

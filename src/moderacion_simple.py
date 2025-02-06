@@ -4,6 +4,7 @@ import statsmodels.formula.api as smf
 from read_data import read_data
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 def moderacion_simple_volume_cripto_usd_average(days):
     # Cargar los datos necesarios
@@ -48,6 +49,8 @@ def moderacion_open_close_volatility(days):
     # Ajustar el modelo de moderación
     model = smf.ols(formula='close ~ open + volatility + open_volatility_interaction', data=df).fit()
 
+    print(model.summary())
+
     # Predicciones para diferentes niveles de volatilidad
     volatility_levels = [df['volatility'].quantile(0.25),  # Baja volatilidad (percentil 25)
                         df['volatility'].median(),        # Media volatilidad
@@ -73,4 +76,48 @@ def moderacion_open_close_volatility(days):
     plt.ylabel("Precio de cierre (Close)")
     plt.legend(title="Niveles de Volatility")
     plt.grid(True)
+    plt.show()
+
+
+def high_volume_open(days, symbol= None):
+ # Definición de las variables
+    data = read_data(days, ['high', 'volume cripto', 'open', 'symbol'])
+    
+    if symbol:
+        data= data[data['symbol']==symbol]
+    # Agregar una variable de interacción (moderadora)
+    data['interaction'] = data['volume cripto'] * data['open']
+
+    # Definir variables dependientes e independientes
+    X = data[['volume cripto', 'open', 'interaction']]
+    y = data['high']
+
+    # Añadir una constante al modelo
+    X = sm.add_constant(X)
+
+    # Ajuste del modelo de regresión
+    model = sm.OLS(y, X).fit()
+
+    # Mostrar resumen de los resultados
+    print(model.summary())
+
+    # Gráfica de los resultados
+    plt.figure(figsize=(10, 6))
+    # Gráfico de dispersión para la relación entre returns y volatility
+    sns.scatterplot(x='volume cripto', y='high', data=data, alpha=0.5)
+
+    # Graficar la línea de regresión para diferentes niveles de la variable moderadora 'open'
+    open_values = [data['open'].min(), data['open'].mean(), data['open'].max()]
+    for o in open_values:
+        # Obtener las predicciones de la línea de regresión
+        interaction_term = data['volume cripto'] * o
+        predictions = model.predict(sm.add_constant(data[['volume cripto', 'open']].assign(interaction=interaction_term)))
+
+        # Graficar la línea de regresión
+        plt.plot(data['volume cripto'], predictions, label=f'Open = {o:.2f}', linestyle='--')
+
+    plt.title('Moderación de Open en la Relación entre high y volume cripto')
+    plt.xlabel('volume cripto')
+    plt.ylabel('high')
+    plt.legend(title='Niveles de Open')
     plt.show()

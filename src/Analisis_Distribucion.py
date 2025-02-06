@@ -4,93 +4,98 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 from read_data import read_data
+import warnings
+# Suprimir warnings
+warnings.filterwarnings("ignore")
 
 
-data = read_data(50, ['volatility', 'open', 'close'])
-data['returns']= (data['close']- data['open'])/ data['open']
 
-def show_dist(var):
-    
-    plt.figure(figsize=(12, 6))
-    sns.histplot(data[var], bins=30, kde=True)
-    plt.title(f'Distribución de {var}')
-    plt.xlabel(var)
-    plt.ylabel('Frecuencia')
-    plt.show()
+def show_dist(var, days):
 
-    # Ajustando varias distribuciones
+    data = read_data(days, [var])
+
+    # Suponiendo que 'data_sample' es tu conjunto de datos
+    data_sample = data[var]  # Puedes reemplazarlo con tus datos
+
+    # Definición de las distribuciones a probar
     distributions = {
         'norm': stats.norm,
         'lognorm': stats.lognorm,
         'expon': stats.expon,
         'pareto': stats.pareto,
         'beta': stats.beta,
-        'gamma': stats.gamma,
         'Weibull': stats.weibull_max,
         'Logística': stats.logistic,
         'Gumbel': stats.gumbel_r,
         'T de Student': stats.t,
     }
 
-    # Evaluar la bondad de ajuste
+    # Configuración del gráfico
+    fig, ax = plt.subplots(len(distributions), 2, figsize=(12, 3 * len(distributions)))
+
+    # Ajuste y gráfico para cada distribución
+    for i, (name, distribution) in enumerate(distributions.items()):
+        # Ajustar la distribución a los datos
+        params = distribution.fit(data_sample)
+
+        print(params)
+
+        # Crear el gráfico PDF de la distribución ajustada
+        x = np.linspace(min(data_sample), max(data_sample), 1000)
+        pdf_fitted = distribution.pdf(x, *params[:-2], loc=params[-2], scale=params[-1])
+
+        # Estimación de la densidad empírica
+        kde = stats.gaussian_kde(data_sample)
+        empirical_pdf = kde(x)
+
+        # Graficar histogramas y PDFs
+        ax[i, 0].hist(data_sample, bins=30, density=True, alpha=0.6, color='g', label='Datos')
+        ax[i, 0].plot(x, empirical_pdf, 'b-', lw=2, label='Densidad empírica (KDE)')
+        ax[i, 0].plot(x, pdf_fitted, 'r-', lw=2, label=f'{name} ajustada')
+        ax[i, 0].set_title(f'Distribución {name}')
+        ax[i, 0].legend()
+
+        # Gráfico Q-Q (cuantiles) para ver ajuste
+        stats.probplot(data_sample, dist=distribution, sparams=params, plot=ax[i, 1])
+        ax[i, 1].set_title(f'Q-Q plot para {name}')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def test_de_bondad(var, days):
+    
+    data = read_data(days, [var])
+    # Definición de las distribuciones a probar
+    distributions = {
+        'weibull_max': stats.weibull_max,
+        'gumbel_r': stats.gumbel_r,
+        'norm': stats.norm,
+        'lognorm': stats.lognorm,
+        'expon': stats.expon,
+        'pareto': stats.pareto,
+        'beta': stats.beta,
+        'logistic': stats.logistic,
+        't': stats.t,
+    }
+
     for name, distribution in distributions.items():
-        param = distribution.fit(data[var])
+        # Ajustar la distribución a los datos
+        params = distribution.fit(data[var])
         
-        # Crear los datos ajustados 
-        x = np.linspace(min(data[var]), max(data[var]), 100)
-        pdf_fitted = distribution.pdf(x, *param)
+        # Prueba de Kolmogorov-Smirnov
+        ks_statistic, ks_p_value = stats.kstest(data[var], name, args=params)
+        
+        # Imprimir resultados de la prueba
+        print(f"Prueba K-S para {name}: estadístico = {ks_statistic}, valor p = {ks_p_value}")
 
-        # Graficar la distribución ajustada
-        plt.figure(figsize=(10, 6))
-        sns.histplot(data[var], bins=30, stat='density', label='Datos Observados', color='blue', kde=True)
-        plt.plot(x, pdf_fitted, label=f'Distribución Ajustada: {name}', color='red')
-        plt.title(f'Comparación de Distribución Ajustada - {name}')
-        plt.xlabel(var)
-        plt.ylabel('Densidad')
-        plt.legend()
-        plt.show()
+        # Conclusiones sobre la hipótesis nula
+        if ks_p_value < 0.05:
+            print(f"Los datos no siguen la distribución {name} (K-S test).")
+        else:
+            print(f"Los datos podrían seguir la distribución {name} (K-S test).")
+        print()  # Espacio adicional para claridad
 
-
-def test_de_bondad():
-    # Ajustar la distribución Weibull
-    params_weibull = stats.weibull_max.fit(data['volatility'])
-
-    # Ajustar la distribución Gumbel
-    params_gumbel = stats.gumbel_r.fit(data['volatility'])
-    # Prueba de Kolmogorov-Smirnov para Weibull
-    ks_statistic_weibull, ks_p_value_weibull = stats.kstest(data['volatility'], 'weibull_max', args=params_weibull)
-    print(f"Prueba K-S para Weibull: estadístico = {ks_statistic_weibull}, valor p = {ks_p_value_weibull}")
-
-    # Conclusiones para Weibull
-    if ks_p_value_weibull < 0.05:
-        print("Los datos no siguen la distribución Weibull (K-S test).")
-    else:
-        print("Los datos podrian seguir la distribución Weibull (K-S test).")
-
-    # Prueba de Kolmogorov-Smirnov para Gumbel
-    ks_statistic_gumbel, ks_p_value_gumbel = stats.kstest(data['volatility'], 'gumbel_r', args=params_gumbel)
-    print(f"Prueba K-S para Gumbel: estadístico = {ks_statistic_gumbel}, valor p = {ks_p_value_gumbel}")
-
-    # Conclusiones para Gumbel
-    if ks_p_value_gumbel < 0.05:
-        print("Los datos no siguen la distribución Gumbel (K-S test).")
-    else:
-        print("Los datos podrian seguir la distribución Gumbel (K-S test).")
-
-
-def test_student(var):
-    # Ajustar la distribución t-Student
-    params_t = stats.t.fit(data[var])
-
-    # Prueba de Kolmogorov-Smirnov para t-Student
-    ks_statistic_t, ks_p_value_t = stats.kstest(data[var], 't', args=params_t)
-    print(f"Prueba K-S para t-Student: estadístico = {ks_statistic_t}, valor p = {ks_p_value_t}")
-
-    # Conclusiones para t-Student
-    if ks_p_value_t < 0.05:
-        print("Los datos no siguen la distribución t-Student (K-S test).")
-    else:
-        print("Los datos podrían seguir la distribución t-Student (K-S test).")
         
 
 

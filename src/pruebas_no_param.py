@@ -3,16 +3,22 @@ from scipy import stats
 from read_data import read_data
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import date, timedelta, datetime
 
-def test_wilcoxon(days):
+def test_wilcoxon(days, var, date: str, type= None):
     # Cargar el CSV
-    data= read_data(days ,['open', 'close', 'date'])
+    data= read_data(days ,['date', 'symbol']+[var])
 
-    data["returns"]= (data['close']- data['open'])/ data['open']
+    if type:
+        data= data[data['symbol']==type]
 
+    DATE= datetime.strptime(date,'%Y-%m-%d').date()
+
+    date_before= (DATE- timedelta(days=25)).strftime("%Y-%m-%d")
+    date_after= (DATE+ timedelta(days=25)).strftime("%Y-%m-%d")    
     # Comparar variable return antes y después de un evento (suponiendo que tienes dos subconjuntos)
-    before_event = data['returns'][data['date'] < '2024-12-24']
-    after_event = data['returns'][data['date'] >= '2024-12-24']
+    before_event = data[var][(data['date'] < date) & (data['date']>= date_before)]
+    after_event = data[var][(data['date'] >= date) & (data['date']<= date_after)]
 
     # Asegúrate de que ambos conjuntos tengan la misma longitud
     min_length = min(len(before_event), len(after_event))
@@ -22,25 +28,33 @@ def test_wilcoxon(days):
     after_event = after_event.iloc[:min_length]
 
     # Hipótesis
-    print("Hipótesis nula (H0): la mediana de la variable return antes del evento es igual a la mediana de la variable return después del evento.")
-    print("Hipótesis alternativa (H1): la mediana de la variable return antes del evento no es igual a la mediana de la variable return después del evento.")
+    print(f"Hipótesis nula (H0): la mediana de la variable {var} antes del evento es igual a la mediana de la variable {var} después del evento.")
+    print(f"Hipótesis alternativa (H1): la mediana de la variable {var} antes del evento no es igual a la mediana de la variable {var} después del evento.")
 
     wilcoxon_statistic, wilcoxon_p_value = stats.wilcoxon(before_event, after_event)
     print(f"Prueba de Wilcoxon: estadístico = {wilcoxon_statistic}, valor p = {wilcoxon_p_value}")
 
     # Interpretación
     if wilcoxon_p_value < 0.05:
-        print("Se rechaza la hipótesis nula: la variable return antes y después del evento es significativamente diferente.")
+        print(f"Se rechaza la hipótesis nula: la variable {var} antes y después del evento es significativamente diferente.")
     else:
         print("No hay suficiente evidencia para rechazar la hipótesis nula.")
 
+    # Gráfica de boxplot para visualizar "antes" y "después"
+    plt.figure(figsize=(10, 6))
+    plt.boxplot([before_event, after_event], labels=['Antes del Evento', 'Después del Evento'])
+    plt.title(f'Comparación de {var} Antes y Después del Evento')
+    plt.ylabel(var)
+    plt.grid()
+    plt.show()    
 
-def test_kruskal_wallis(days):
+
+def test_kruskal_wallis(days, cripto1, cripto2, cripto3):
     # Supongamos que estás comparando la volatilidad de diferentes criptomonedas
     data= read_data(days , ['volatility', 'symbol'])
-    group1 = data[data['symbol'] == 'BTC/USD']['volatility']
-    group2 = data[data['symbol'] == 'BAT/USD']['volatility']
-    group3 = data[data['symbol'] == 'LTC/USD']['volatility']
+    group1 = data[data['symbol'] == cripto1]['volatility']
+    group2 = data[data['symbol'] == cripto2]['volatility']
+    group3 = data[data['symbol'] == cripto3]['volatility']
     
     # Hipótesis
     print("Prueba de Kruskal-Wallis")
@@ -56,40 +70,47 @@ def test_kruskal_wallis(days):
         print("Se rechaza la hipótesis nula: hay diferencias significativas en la volatilidad entre las criptomonedas.")
     else:
         print("No hay suficiente evidencia para rechazar la hipótesis nula.")
+    # Gráfica de boxplot para visualizar la volatilidad de las criptomonedas
+    plt.figure(figsize=(10, 6))
+    plt.boxplot([group1, group2, group3], labels=[cripto1, cripto2, cripto3])
+    plt.title('Volatilidad de Criptomonedas')
+    plt.ylabel('Volatilidad')
+    plt.xticks(rotation=45)
+    plt.grid()
+    plt.show()
 
 
-def test_spearman( days):
-    data= read_data(days , ['volatility', 'open', 'close'])
-    data['returns']= (data['close']- data['open']) /data['open']
+def test_spearman( days, var1, var2):
+
+    data= read_data(days , [var1, var2])
 
     # Hipótesis
     print("Correlación de Spearman")
-    print("Hipótesis nula (H0): no hay correlación entre la variable returns y volatilidad.")
-    print("Hipótesis alternativa (H1): hay una correlación entre la variable returns y volatilidad.")
+    print(f"Hipótesis nula (H0): no hay correlación entre la variable {var1} y {var2}.")
+    print(f"Hipótesis alternativa (H1): hay una correlación entre la variable {var1} y {var2}.")
 
     # Evaluar la correlación entre el la variable returns y la volatilidad
-    spearman_corr, spearman_p_value = stats.spearmanr(data['returns'], data['volatility'])
+    spearman_corr, spearman_p_value = stats.spearmanr(data[var1], data[var2])
     print(f"Correlación de Spearman: coeficiente = {spearman_corr}, valor p = {spearman_p_value}")
 
     # Interpretación
     if spearman_p_value < 0.05:
-        print("Hay una correlación significativa entre el la variable returns y la volatilidad.")
+        print(f"Hay una correlación significativa entre el la variable {var1} y la {var2}.")
     else:
         print("No hay suficiente evidencia para concluir que existe una correlación.")      
 
 
-def test_mannwhitneyu(days):
-    data= read_data(days, ['open', 'close', 'symbol'])
+def test_mannwhitneyu(days, var, type1, type2):
 
-    data['returns']= (data['close']- data['open']) /data['open']
+    data= read_data(days, [var, 'symbol'])
     # Dividir los datos en dos grupos, por ejemplo, comparar la volatilidad de dos criptomonedas
-    group1 = data[data['symbol'] == 'BTC/USD']['returns']
-    group2 = data[data['symbol'] == 'ETH/USD']['returns']
+    group1 = data[data['symbol'] == type1][var]
+    group2 = data[data['symbol'] == type2][var]
 
     # Hipótesis
     print("Prueba de Mann-Whitney U")
-    print("Hipótesis nula (H0): las distribuciones de la Variable Returns de BTC y ETH son iguales.")
-    print("Hipótesis alternativa (H1): las distribuciones de la Variable Returns de BTC y ETH son diferentes.")
+    print(f"Hipótesis nula (H0): las distribuciones de la Variable {var} de {type1} y {type2} son iguales.")
+    print(f"Hipótesis alternativa (H1): las distribuciones de la Variable {var} de {type1} y {type2} son diferentes.")
 
     # Realizar la prueba de Mann-Whitney U
     mannwhitney_statistic, mannwhitney_p_value = stats.mannwhitneyu(group1, group2, alternative='two-sided')
@@ -97,7 +118,7 @@ def test_mannwhitneyu(days):
 
     # Interpretación
     if mannwhitney_p_value < 0.05:
-        print("Se rechaza la hipótesis nula: hay una diferencia significativa en la Variable Returns entre BTC y ETH.")
+        print(f"Se rechaza la hipótesis nula: hay una diferencia significativa en la Variable {var} entre {type1} y {type2}.")
     else:
         print("No hay suficiente evidencia para rechazar la hipótesis nula.")
 
@@ -105,11 +126,11 @@ def test_mannwhitneyu(days):
     plt.figure(figsize=(12, 6))
 
     # Histograma de las distribuciones
-    sns.histplot(group1, bins=30, color='blue', label='BTC', stat='density', kde=True, alpha=0.6)
-    sns.histplot(group2, bins=30, color='orange', label='ETH', stat='density', kde=True, alpha=0.6)
+    sns.histplot(group1, bins=30, color='blue', label=type1, stat='density', kde=True, alpha=0.6)
+    sns.histplot(group2, bins=30, color='orange', label=type2, stat='density', kde=True, alpha=0.6)
 
-    plt.title('Distribuciones de Variable Returns de BTC y ETH')
-    plt.xlabel('Variable Returns')
+    plt.title(f'Distribuciones de Variable {var} de {type1} y {type2}')
+    plt.xlabel(f'Variable {var}')
     plt.ylabel('Densidad')
     plt.legend()
     plt.grid()
