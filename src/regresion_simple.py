@@ -15,8 +15,8 @@ def simple_regresion(days: int, var1, var2, type= None):
         data= data[data['symbol']==type]
     # Asegúrate de eliminar valores nulos
     data = data.dropna(subset=[var2, var1])
-    # data[var1]= abs(data[var1])
-    # data[var2]= abs(data[var2])
+    data[var1]= abs(data[var1])
+    data[var2]= abs(data[var2])
 
     # Definir variable independiente y dependiente
     X = data[var1]  # variable independiente

@@ -96,6 +96,22 @@ def test_de_bondad(var, days):
             print(f"Los datos podrían seguir la distribución {name} (K-S test).")
         print()  # Espacio adicional para claridad
 
+    np.random.seed(42)
+    x0_hat, gamma_hat = stats.cauchy.fit(data)
+    ks_stat, p_value = stats.kstest(data, 'cauchy', args=(x0_hat, gamma_hat))
+
+    # Resultados
+    print(f"Estadístico KS: {ks_stat}")
+    print(f"P-valor: {p_value}")
+
+    # Interpretación del resultado
+    alpha = 0.05
+    if p_value < alpha:
+        print("Se rechaza la hipótesis nula: la muestra no sigue una distribución de Cauchy.")
+    else:
+        print("No se puede rechazar la hipótesis nula: la muestra puede seguir una distribución de Cauchy.")
+        
+
         
 
 
